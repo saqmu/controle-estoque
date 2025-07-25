@@ -44,7 +44,7 @@
 
     <script>
         // <<< COLE A URL DA SUA PONTE DO APPS SCRIPT AQUI DENTRO DAS ASPAS >>>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTBGPrAzGnorSUVB7DBKZnr9YvG9bRC1WhIIq_oCfekR8R4zvKHn4GTAW8OFv7y9UdLQ/exec" 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzD3EolMrY4fvDj7aicQKpNGzAdQ6XOL_DEugKO9g7LJ9eARe7FRmKopnfeb_wQLAvdCA/exec" 
 
         const qrReaderDiv = document.getElementById('qr-reader');
         const formContainer = document.getElementById('form-container');
