@@ -65,7 +65,7 @@
         }
 
         // Configuração do leitor de QR Code
-        var html5QrcodeScanner = new Html5Qeader(
+        var html5QrcodeScanner = new Html5Q**r**eader
             "qr-reader", { fps: 10, qrbox: 250 });
         html5QrcodeScanner.render(onScanSuccess);
 
