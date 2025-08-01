@@ -44,50 +44,80 @@
     <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
 
     <script>
-        // <<< INSIRA A SUA URL DO APPS SCRIPT AQUI DENTRO DAS ASPAS >>>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzD3EolMrY4fvDj7aicQKpNGzAdQ6XOL_DEugKO9g7LJ9eARe7FRmKopnfeb_wQLAvdCA/exec"; 
+        <!-- Cole todo o seu HTML acima desta linha... -->
+
+    <!-- A biblioteca mágica que lê QR Code -->
+    <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
+
+    <script>
+        // URL do Apps Script que REGISTRA os dados (usado na função doPost)
+        const SCRIPT_URL_POST = "https://script.google.com/macros/s/AKfycbzD3EolMrY4fvDj7aicQKpNGzAdQ6XOL_DEugKO9g7LJ9eARe7FRmKopnfeb_wQLAvdCA/exec"; 
+
+        // URL do Apps Script que BUSCA o nome do produto (usado na função doGet)
+        const SCRIPT_URL_GET = "https://script.google.com/macros/s/AKfycbzh_Z1ZWqecLjvEUoLMuy1_t3Y6YIm_Xst0E5Yb4sYf_W4qNXIdva0PYccRCElBT6L2og/exec";
 
         const qrReaderDiv = document.getElementById('qr-reader');
         const formContainer = document.getElementById('form-container');
 
-        // Função que é chamada quando o QR code é lido com sucesso
+        // Função chamada quando o QR code é lido com sucesso
         function onScanSuccess(decodedText, decodedResult) {
-            // Para o leitor e mostra uma mensagem de "Carregando..."
             html5QrcodeScanner.clear();
-            qrReaderDiv.style.display = 'block'; // Garante que a mensagem apareça
+            qrReaderDiv.style.display = 'block';
             qrReaderDiv.innerHTML = "<h2>Buscando informações do produto...</h2>";
         
-            // O código do produto lido
-            var codigoLido = decodedText;
-        
-            // AQUI VOCÊ DEVE USAR A URL DO SCRIPT QUE BUSCA O NOME DO PRODUTO!
-            // ELA PODE SER DIFERENTE DA URL QUE ENVIA OS DADOS!
-            var urlPergunta = "https://script.google.com/macros/s/AKfycbzh_Z1ZWqecLjvEUoLMuy1_t3Y6YIm_Xst0E5Yb4sYf_W4qNXIdva0PYccRCElBT6L2og/exec" + "?action=lookup&code=" + codigoLido;
+            const codigoLido = decodedText;
+            const urlPergunta = `${SCRIPT_URL_GET}?action=lookup&code=${codigoLido}`;
             
-            // Faz a pergunta para a planilha
+            // Faz a pergunta para a planilha de produtos
             fetch(urlPergunta)
               .then(response => response.text())
               .then(nomeProduto => {
-                  // Esconde o "carregando" e o scanner
                   qrReaderDiv.style.display = 'none';
-        
-                  // Preenche os campos do formulário
-                  document.getElementById('codigo').value = codigoLido; // o código escondido
-                  document.querySelector('#form-container h2').textContent = nomeProduto; // O nome visível!
-                  
-                  // Mostra o formulário
+                  // Sugestão: Mude o input 'codigo' para type="hidden" no HTML para ficar invisível
+                  document.getElementById('codigo').value = codigoLido; 
+                  document.querySelector('#form-container h2').textContent = nomeProduto;
                   formContainer.style.display = 'block';
               })
               .catch(error => {
                   console.error('Erro ao buscar nome:', error);
                   alert('Não foi possível encontrar o nome do produto. Verifique sua conexão ou se o código está correto.');
-                  location.reload(); // Recarrega para tentar de novo
+                  location.reload();
               });
         }
         
-        // Função para cancelar e voltar a escanear (ADICIONE SE NÃO TIVER)
+        // Função para cancelar e voltar a escanear
         function cancelScan() {
             location.reload();
+        }
+
+        // Função para enviar os dados para a planilha de registros
+        function submitForm() {
+            const form = new FormData();
+            form.append('codigo', document.getElementById('codigo').value);
+            form.append('tipo', document.getElementById('tipo').value);
+            form.append('quantidade', document.getElementById('quantidade').value);
+            form.append('nome', document.getElementById('nome').value);
+
+            // Desabilita os botões para evitar cliques duplos
+            document.querySelectorAll('button').forEach(button => button.disabled = true);
+            document.querySelector('button').textContent = 'Enviando...';
+            
+            fetch(SCRIPT_URL_POST, { method: 'POST', body: form })
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('success-message').textContent = "Registrado com sucesso! A página será recarregada.";
+                    document.getElementById('success-message').style.display = 'block';
+                    formContainer.style.display = 'none';
+                    setTimeout(() => location.reload(), 2500); // Recarrega após 2.5s
+                })
+                .catch(error => {
+                    document.getElementById('error-message').textContent = 'Erro ao registrar. Tente novamente.';
+                    document.getElementById('error-message').style.display = 'block';
+                    // Reabilita os botões em caso de erro
+                    document.querySelectorAll('button').forEach(button => button.disabled = false);
+                    document.querySelector('button').textContent = 'Registrar Movimentação';
+                    console.error('Error:', error);
+                });
         }
 
         // Configuração do leitor de QR Code
@@ -97,38 +127,9 @@
                 qrbox: 250, 
                 facingMode: "environment" 
             });
+
+        // Inicia o leitor
         html5QrcodeScanner.render(onScanSuccess);
-
-        // Função para enviar os dados para a planilha
-        function submitForm() {
-            // ... (o resto da função submitForm() continua igual)
-        
-        // Função para enviar os dados para a planilha
-        function submitForm() {
-            const form = new FormData();
-            form.append('codigo', document.getElementById('codigo').value);
-            form.append('tipo', document.getElementById('tipo').value);
-            form.append('quantidade', document.getElementById('quantidade').value);
-            form.append('nome', document.getElementById('nome').value);
-
-            document.querySelector('button').disabled = true;
-            document.querySelector('button').textContent = 'Enviando...';
-            
-            fetch(SCRIPT_URL, { method: 'POST', body: form})
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('success-message').textContent = "Registrado com sucesso! Recarregue a página para uma nova leitura.";
-                    document.getElementById('success-message').style.display = 'block';
-                    formContainer.style.display = 'none';
-                })
-                .catch(error => {
-                    document.getElementById('error-message').textContent = 'Erro ao registrar. Tente novamente.';
-                    document.getElementById('error-message').style.display = 'block';
-                    document.querySelector('button').disabled = false;
-                    document.querySelector('button').textContent = 'Registrar Movimentação';
-                    console.error('Error:', error);
-                });
-        }
     </script>
 </body>
 </html>
