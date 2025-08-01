@@ -51,58 +51,57 @@
         const formContainer = document.getElementById('form-container');
 
         // Função que é chamada quando o QR code é lido com sucesso
-function onScanSuccess(decodedText, decodedResult) {
-    // Para o leitor e mostra uma mensagem de "Carregando..."
-    html5QrcodeScanner.clear();
-    qrReaderDiv.innerHTML = "<h2>Buscando informações do produto...</h2>";
-
-    // O código do produto lido
-    var codigoLido = decodedText;
-
-    // Constrói a URL para a PERGUNTA (usando GET)
-    var urlPergunta = SCRIPT_URL + "?action=lookup&code=" + codigoLido;
-    
-    // Faz a pergunta para a planilha
-    fetch(urlPergunta)
-      .then(response => response.text())
-      .then(nomeProduto => {
-          // Esconde o "carregando" e o scanner
-          qrReaderDiv.style.display = 'none';
-
-          // Preenche os campos do formulário
-          document.getElementById('codigo').value = codigoLido; // o código escondido
-          document.querySelector('#form-container h2').textContent = nomeProduto; // O nome visível!
-          
-          // Mostra o formulário
-          formContainer.style.display = 'block';
-      })
-      .catch(error => {
-          console.error('Erro ao buscar nome:', error);
-          alert('Não foi possível encontrar o nome do produto. Verifique sua conexão.');
-          location.reload(); // Recarrega para tentar de novo
-      });
-}
-            
-            // Para o leitor de QR Code
+        function onScanSuccess(decodedText, decodedResult) {
+            // Para o leitor e mostra uma mensagem de "Carregando..."
             html5QrcodeScanner.clear();
-            qrReaderDiv.style.display = 'none';
-
-            // Preenche o campo de código e mostra o formulário
-            document.getElementById('codigo').value = decodedText;
-            formContainer.style.display = 'block';
+            qrReaderDiv.style.display = 'block'; // Garante que a mensagem apareça
+            qrReaderDiv.innerHTML = "<h2>Buscando informações do produto...</h2>";
+        
+            // O código do produto lido
+            var codigoLido = decodedText;
+        
+            // AQUI VOCÊ DEVE USAR A URL DO SCRIPT QUE BUSCA O NOME DO PRODUTO!
+            // ELA PODE SER DIFERENTE DA URL QUE ENVIA OS DADOS!
+            var urlPergunta = "https://script.google.com/macros/s/AKfycbzh_Z1ZWqecLjvEUoLMuy1_t3Y6YIm_Xst0E5Yb4sYf_W4qNXIdva0PYccRCElBT6L2og/exec" + "?action=lookup&code=" + codigoLido;
             
-            alert(`Produto Lido: ${decodedText}`);
+            // Faz a pergunta para a planilha
+            fetch(urlPergunta)
+              .then(response => response.text())
+              .then(nomeProduto => {
+                  // Esconde o "carregando" e o scanner
+                  qrReaderDiv.style.display = 'none';
+        
+                  // Preenche os campos do formulário
+                  document.getElementById('codigo').value = codigoLido; // o código escondido
+                  document.querySelector('#form-container h2').textContent = nomeProduto; // O nome visível!
+                  
+                  // Mostra o formulário
+                  formContainer.style.display = 'block';
+              })
+              .catch(error => {
+                  console.error('Erro ao buscar nome:', error);
+                  alert('Não foi possível encontrar o nome do produto. Verifique sua conexão ou se o código está correto.');
+                  location.reload(); // Recarrega para tentar de novo
+              });
+        }
+        
+        // Função para cancelar e voltar a escanear (ADICIONE SE NÃO TIVER)
+        function cancelScan() {
+            location.reload();
         }
 
-        // Configuração do leitor de QR Code - Com a correção do nome
-      // COMO VAI FICAR
-var html5QrcodeScanner = new Html5QrcodeScanner(
-    "qr-reader", { 
-        fps: 10, 
-        qrbox: 250, 
-        facingMode: "environment" 
-    });
+        // Configuração do leitor de QR Code
+        var html5QrcodeScanner = new Html5QrcodeScanner(
+            "qr-reader", { 
+                fps: 10, 
+                qrbox: 250, 
+                facingMode: "environment" 
+            });
         html5QrcodeScanner.render(onScanSuccess);
+
+        // Função para enviar os dados para a planilha
+        function submitForm() {
+            // ... (o resto da função submitForm() continua igual)
         
         // Função para enviar os dados para a planilha
         function submitForm() {
