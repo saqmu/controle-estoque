@@ -22,7 +22,7 @@
 
     <!-- O formulário que aparece depois da leitura -->
     <div id="form-container">
-        <h2>Produto Lido</h2>
+      <h2 style="font-style: italic;">Aguardando leitura...</h2>
         <input type="text" id="codigo" name="codigo" readonly>
         
         <select id="tipo" name="tipo">
@@ -51,8 +51,37 @@
         const formContainer = document.getElementById('form-container');
 
         // Função que é chamada quando o QR code é lido com sucesso
-        function onScanSuccess(decodedText, decodedResult) {
-            console.log(`Code matched = ${decodedText}`, decodedResult);
+function onScanSuccess(decodedText, decodedResult) {
+    // Para o leitor e mostra uma mensagem de "Carregando..."
+    html5QrcodeScanner.clear();
+    qrReaderDiv.innerHTML = "<h2>Buscando informações do produto...</h2>";
+
+    // O código do produto lido
+    var codigoLido = decodedText;
+
+    // Constrói a URL para a PERGUNTA (usando GET)
+    var urlPergunta = SCRIPT_URL + "?action=lookup&code=" + codigoLido;
+    
+    // Faz a pergunta para a planilha
+    fetch(urlPergunta)
+      .then(response => response.text())
+      .then(nomeProduto => {
+          // Esconde o "carregando" e o scanner
+          qrReaderDiv.style.display = 'none';
+
+          // Preenche os campos do formulário
+          document.getElementById('codigo').value = codigoLido; // o código escondido
+          document.querySelector('#form-container h2').textContent = nomeProduto; // O nome visível!
+          
+          // Mostra o formulário
+          formContainer.style.display = 'block';
+      })
+      .catch(error => {
+          console.error('Erro ao buscar nome:', error);
+          alert('Não foi possível encontrar o nome do produto. Verifique sua conexão.');
+          location.reload(); // Recarrega para tentar de novo
+      });
+}
             
             // Para o leitor de QR Code
             html5QrcodeScanner.clear();
@@ -74,12 +103,7 @@ var html5QrcodeScanner = new Html5QrcodeScanner(
         facingMode: "environment" 
     });
         html5QrcodeScanner.render(onScanSuccess);
-        // ADICIONE ESTE NOVO CÓDIGO
-// Função para cancelar e voltar a escanear
-function cancelScan() {
-    location.reload();
-}
-
+        
         // Função para enviar os dados para a planilha
         function submitForm() {
             const form = new FormData();
