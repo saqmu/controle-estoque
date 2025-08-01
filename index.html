@@ -23,7 +23,9 @@
     <!-- O formulário que aparece depois da leitura -->
     <div id="form-container">
       <h2 style="font-style: italic;">Aguardando leitura...</h2>
-        <input type="text" id="codigo" name="codigo" readonly>
+        
+        <!-- Este campo guarda o código lido, mas fica invisível para o usuário -->
+        <input type="hidden" id="codigo" name="codigo">
         
         <select id="tipo" name="tipo">
             <option value="Saída do Estoque">Saída do Estoque</option>
@@ -40,15 +42,10 @@
         <div id="error-message" style="display:none;"></div>
     </div>
 
-    <!-- A biblioteca mágica que lê QR Code -->
+    <!-- A biblioteca que lê o QR Code -->
     <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
 
-    <script>
-        <!-- Cole todo o seu HTML acima desta linha... -->
-
-    <!-- A biblioteca mágica que lê QR Code -->
-    <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
-
+    <!-- Nosso script para controlar tudo -->
     <script>
         // URL do Apps Script que REGISTRA os dados (usado na função doPost)
         const SCRIPT_URL_POST = "https://script.google.com/macros/s/AKfycbzD3EolMrY4fvDj7aicQKpNGzAdQ6XOL_DEugKO9g7LJ9eARe7FRmKopnfeb_wQLAvdCA/exec"; 
@@ -72,11 +69,15 @@
             fetch(urlPergunta)
               .then(response => response.text())
               .then(nomeProduto => {
-                  qrReaderDiv.style.display = 'none';
-                  // Sugestão: Mude o input 'codigo' para type="hidden" no HTML para ficar invisível
-                  document.getElementById('codigo').value = codigoLido; 
-                  document.querySelector('#form-container h2').textContent = nomeProduto;
-                  formContainer.style.display = 'block';
+                  if (nomeProduto && !nomeProduto.startsWith("Erro")) {
+                    qrReaderDiv.style.display = 'none';
+                    document.getElementById('codigo').value = codigoLido; 
+                    document.querySelector('#form-container h2').textContent = nomeProduto;
+                    formContainer.style.display = 'block';
+                  } else {
+                    alert('Produto não encontrado ou erro no script. Verifique se o código do produto existe na planilha "Controle de Estoque Mestre".');
+                    location.reload();
+                  }
               })
               .catch(error => {
                   console.error('Erro ao buscar nome:', error);
@@ -99,23 +100,23 @@
             form.append('nome', document.getElementById('nome').value);
 
             // Desabilita os botões para evitar cliques duplos
-            document.querySelectorAll('button').forEach(button => button.disabled = true);
-            document.querySelector('button').textContent = 'Enviando...';
+            document.querySelectorAll('#form-container button').forEach(button => button.disabled = true);
+            document.querySelector('#form-container button').textContent = 'Enviando...';
             
             fetch(SCRIPT_URL_POST, { method: 'POST', body: form })
                 .then(response => response.text())
                 .then(data => {
+                    formContainer.style.display = 'none';
                     document.getElementById('success-message').textContent = "Registrado com sucesso! A página será recarregada.";
                     document.getElementById('success-message').style.display = 'block';
-                    formContainer.style.display = 'none';
                     setTimeout(() => location.reload(), 2500); // Recarrega após 2.5s
                 })
                 .catch(error => {
                     document.getElementById('error-message').textContent = 'Erro ao registrar. Tente novamente.';
                     document.getElementById('error-message').style.display = 'block';
                     // Reabilita os botões em caso de erro
-                    document.querySelectorAll('button').forEach(button => button.disabled = false);
-                    document.querySelector('button').textContent = 'Registrar Movimentação';
+                    document.querySelectorAll('#form-container button').forEach(button => button.disabled = false);
+                    document.querySelector('#form-container button').textContent = 'Registrar Movimentação';
                     console.error('Error:', error);
                 });
         }
