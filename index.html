@@ -34,6 +34,7 @@
         <input type="text" id="nome" name="nome" placeholder="Seu Nome" required>
         
         <button onclick="submitForm()">Registrar Movimentação</button>
+        <button onclick="cancelScan()" style="background-color: #6c757d; margin-top: 5px;">Cancelar / Ler Outro</button>
         
         <div id="success-message" style="display:none;"></div>
         <div id="error-message" style="display:none;"></div>
@@ -65,9 +66,19 @@
         }
 
         // Configuração do leitor de QR Code - Com a correção do nome
-       var html5QrcodeScanner = new Html5QrcodeScanner(
-            "qr-reader", { fps: 10, qrbox: 250 });
+      // COMO VAI FICAR
+var html5QrcodeScanner = new Html5QrcodeScanner(
+    "qr-reader", { 
+        fps: 10, 
+        qrbox: 250, 
+        facingMode: "environment" 
+    });
         html5QrcodeScanner.render(onScanSuccess);
+        // ADICIONE ESTE NOVO CÓDIGO
+// Função para cancelar e voltar a escanear
+function cancelScan() {
+    location.reload();
+}
 
         // Função para enviar os dados para a planilha
         function submitForm() {
