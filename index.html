@@ -1,18 +1,105 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Controle de Estoque V3.0</title>
+    <title>Controle de Estoque - Guariroba</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; }
-        #qr-reader { width: 100%; border: 2px solid #ccc; border-radius: 8px; }
-        #form-container, #loading-message, #final-message { display: none; margin-top: 20px; text-align: center; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; box-sizing: border-box; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:disabled { background-color: #a0a0a0; }
-        #success-message, #error-message { padding: 15px; margin-top: 10px; border-radius: 5px; font-weight: bold; }
-        #success-message { background-color: #d4edda; color: #155724; }
-        #error-message { background-color: #f8d7da; color: #721c24; }
+        /* === PALETA DE CORES ÁGUAS GUARIROBA === */
+        :root {
+            --aguas-dark-blue: #003B6D;  /* Azul Corporativo Escuro */
+            --aguas-light-blue: #00A9E0; /* Azul Água Claro */
+            --aguas-grey: #6c757d;       /* Cinza para botões secundários */
+            --success-bg: #e6f7ff;        /* Fundo para mensagem de sucesso */
+            --success-border: #91d5ff;     /* Borda para mensagem de sucesso */
+            --error-bg: #f8d7da;          /* Fundo de erro (mantido) */
+            --error-text: #721c24;        /* Texto de erro (mantido) */
+            --background-light: #f4f6f8; /* Um fundo levemente acinzentado */
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            max-width: 500px; 
+            margin: auto; 
+            padding: 20px;
+            background-color: var(--background-light);
+            color: #333;
+        }
+
+        h1 {
+            color: var(--aguas-dark-blue);
+            text-align: center;
+            border-bottom: 2px solid var(--aguas-light-blue);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        #qr-reader { 
+            width: 100%; 
+            border: 3px dashed var(--aguas-light-blue); 
+            border-radius: 8px;
+            overflow: hidden; /* Garante que a borda arredondada seja aplicada */
+        }
+
+        #form-container, #loading-message, #final-message { 
+            display: none; 
+            margin-top: 20px; 
+            text-align: center; 
+        }
+
+        input, select, button { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 10px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            border-radius: 8px; 
+            border: 1px solid #ccc; 
+        }
+
+        button { 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        #submit-btn {
+             background-color: var(--aguas-dark-blue);
+        }
+
+        #cancel-btn {
+            background-color: var(--aguas-grey);
+        }
+
+        button:disabled { 
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        #success-message, #error-message { 
+            padding: 15px; 
+            margin-top: 10px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            border: 1px solid;
+        }
+        
+        #success-message { 
+            background-color: var(--success-bg); 
+            color: var(--aguas-dark-blue);
+            border-color: var(--success-border);
+        }
+        
+        #error-message { 
+            background-color: var(--error-bg); 
+            color: var(--error-text);
+            border-color: var(--error-text);
+        }
     </style>
 </head>
 <body>
@@ -25,7 +112,6 @@
     <div id="form-container">
       <h2 id="product-name" style="font-style: italic;"></h2>
         <input type="hidden" id="codigo" name="codigo">
-        <!-- Novo campo escondido para guardar o nome do produto -->
         <input type="hidden" id="nome-produto" name="nome_produto">
 
         <select id="tipo" name="tipo">
@@ -34,10 +120,12 @@
         </select>
         <input type="number" id="quantidade" name="quantidade" placeholder="Quantidade" required>
         <input type="text" id="nome-colaborador" name="nome_colaborador" placeholder="Seu Nome" required>
+        
         <button id="submit-btn" onclick="submitForm()">Registrar Movimentação</button>
-        <button id="cancel-btn" onclick="cancelScan()" style="background-color: #6c757d;">Cancelar / Ler Outro</button>
+        <button id="cancel-btn" onclick="cancelScan()">Cancelar / Ler Outro</button>
     </div>
 
+    <!-- O JavaScript continua exatamente o mesmo, não precisa ser alterado -->
     <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6m-NUSNeHmNgNO0j79fDawXu5e_Ob_-08KJGDMbHx4Sv1LvqE4Yuo1G3hqThppVGflg/exec"; 
@@ -63,7 +151,6 @@
                   if (nomeProduto && !nomeProduto.startsWith("ERRO:")) {
                     document.getElementById('codigo').value = codigoLido; 
                     productNameH2.textContent = nomeProduto;
-                    // Preenchendo o novo campo escondido
                     document.getElementById('nome-produto').value = nomeProduto; 
                     formContainer.style.display = 'block';
                   } else {
@@ -93,7 +180,6 @@
             
             const form = new FormData();
             form.append('codigo', document.getElementById('codigo').value);
-            // Enviando o novo campo
             form.append('nome_produto', document.getElementById('nome-produto').value); 
             form.append('tipo', document.getElementById('tipo').value);
             form.append('quantidade', document.getElementById('quantidade').value);
