@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Controle de Estoque V2.1</title>
+    <title>Controle de Estoque V3.0</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; }
@@ -25,19 +25,21 @@
     <div id="form-container">
       <h2 id="product-name" style="font-style: italic;"></h2>
         <input type="hidden" id="codigo" name="codigo">
+        <!-- Novo campo escondido para guardar o nome do produto -->
+        <input type="hidden" id="nome-produto" name="nome_produto">
+
         <select id="tipo" name="tipo">
             <option value="Saída do Estoque">Saída do Estoque</option>
             <option value="Entrada no Estoque">Entrada no Estoque</option>
         </select>
         <input type="number" id="quantidade" name="quantidade" placeholder="Quantidade" required>
-        <input type="text" id="nome" name="nome" placeholder="Seu Nome" required>
+        <input type="text" id="nome-colaborador" name="nome_colaborador" placeholder="Seu Nome" required>
         <button id="submit-btn" onclick="submitForm()">Registrar Movimentação</button>
         <button id="cancel-btn" onclick="cancelScan()" style="background-color: #6c757d;">Cancelar / Ler Outro</button>
     </div>
 
     <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
     <script>
-        // <<< COLE AQUI A SUA ÚNICA E NOVA URL GERADA NO PASSO 1 >>>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6m-NUSNeHmNgNO0j79fDawXu5e_Ob_-08KJGDMbHx4Sv1LvqE4Yuo1G3hqThppVGflg/exec"; 
 
         const qrReaderDiv = document.getElementById('qr-reader');
@@ -61,6 +63,8 @@
                   if (nomeProduto && !nomeProduto.startsWith("ERRO:")) {
                     document.getElementById('codigo').value = codigoLido; 
                     productNameH2.textContent = nomeProduto;
+                    // Preenchendo o novo campo escondido
+                    document.getElementById('nome-produto').value = nomeProduto; 
                     formContainer.style.display = 'block';
                   } else {
                     finalMessage.innerHTML = `<div id="error-message">${nomeProduto}</div>`;
@@ -87,11 +91,13 @@
             cancelBtn.disabled = true;
             submitBtn.textContent = 'Enviando...';
             
-            const form = new FormData(document.querySelector('form')); // Maneira mais simples de pegar dados
+            const form = new FormData();
             form.append('codigo', document.getElementById('codigo').value);
+            // Enviando o novo campo
+            form.append('nome_produto', document.getElementById('nome-produto').value); 
             form.append('tipo', document.getElementById('tipo').value);
             form.append('quantidade', document.getElementById('quantidade').value);
-            form.append('nome', document.getElementById('nome').value);
+            form.append('nome_colaborador', document.getElementById('nome-colaborador').value);
 
             fetch(SCRIPT_URL, { method: 'POST', body: form })
                 .then(response => response.text())
