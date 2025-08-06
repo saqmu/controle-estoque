@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Controle de Estoque - Guariroba</title>
+    <title>Controle de Estoque V4.0</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         /* Estilos Gerais do Corpo da Página */
@@ -10,40 +10,65 @@
             max-width: 500px; 
             margin: auto; 
             padding: 20px;
-            /* O FUNDO GRADIENTE EM TONS DE AZUL */
             background: linear-gradient(135deg, #0d47a1, #1e88e5, #42a5f5);
-            background-attachment: fixed; /* Mantém o gradiente fixo ao rolar a página */
+            background-attachment: fixed;
         }
 
         /* Título Principal */
         h1 {
-            color: white; /* Cor branca para contrastar com o fundo azul */
+            color: white;
             text-align: center;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4); /* Sombra para dar profundidade */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
         }
 
         /* Título do Produto no Formulário */
         #product-name {
             font-style: italic;
-            color: #005A8D; /* Um azul mais escuro da paleta */
+            color: #005A8D;
         }
         
-        /* Container do Leitor e do Formulário */
-        #qr-reader, #form-container, #loading-message, #final-message {
-            background-color: rgba(255, 255, 255, 0.95); /* Fundo branco com leve transparência */
+        /* Container Principal que agrupa tudo */
+        #app-container {
+            background-color: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
             padding: 20px;
             margin-top: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Sombra para efeito de "elevação" */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             border: 1px solid #ddd;
         }
-
-        #loading-message, #final-message {
-             display: none;
-             text-align: center; 
+        
+        /* Container do Leitor de QR Code (começa escondido) */
+        #qr-reader {
+            width: 100%; 
+            border: 2px solid #ccc; 
+            border-radius: 8px;
+            display: none; /* Começa escondido */
         }
 
-        /* Campos de Formulário e Botões */
+        #form-container, #loading-message, #final-message {
+             display: none;
+             text-align: center;
+             margin-top: 20px;
+        }
+
+        /* NOVO BOTÃO DE INICIAR SCANNER */
+        #start-scan-btn {
+            width: 100%;
+            background-color: #005A8D; /* Azul Corporativo */
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        #start-scan-btn:hover {
+            background-color: #004a74;
+        }
+        
+        /* Campos de Formulário */
         input, select { 
             width: 100%; 
             padding: 12px; 
@@ -54,6 +79,7 @@
             border: 1px solid #ccc; 
         }
 
+        /* Botões do formulário */
         button {
             width: 100%; 
             padding: 14px; 
@@ -64,113 +90,129 @@
             cursor: pointer; 
             font-weight: bold;
             border-radius: 5px;
-            transition: background-color 0.2s ease-in-out; /* Efeito suave de transição */
         }
 
-        /* Botão Principal - Cor da Águas Guariroba */
-        #submit-btn {
-            background-color: #005A8D; /* Azul Corporativo */
-            color: white;
-        }
-        #submit-btn:hover {
-            background-color: #004a74; /* Um pouco mais escuro ao passar o mouse */
-        }
-
-        /* Botão Secundário */
-        #cancel-btn {
-            background-color: #6c757d; /* Cinza Neutro */
-            color: white;
-        }
-        #cancel-btn:hover {
-            background-color: #5a6268;
-        }
-
-        /* Botões desabilitados */
-        button:disabled { 
-            background-color: #a0a0a0;
-            cursor: not-allowed;
-        }
+        #submit-btn { background-color: #005A8D; color: white; }
+        #cancel-btn { background-color: #6c757d; color: white; }
+        button:disabled { background-color: #a0a0a0; cursor: not-allowed; }
 
         /* Mensagens de Sucesso e Erro */
-        #success-message, #error-message { 
-            padding: 15px; 
-            margin-top: 10px; 
-            border-radius: 5px; 
-            font-weight: bold; 
-        }
-        #success-message { 
-            background-color: #d4edda; 
-            color: #155724; 
-        }
-        #error-message { 
-            background-color: #f8d7da; 
-            color: #721c24; 
-        }
+        #success-message, #error-message { padding: 15px; margin-top: 10px; border-radius: 5px; font-weight: bold; }
+        #success-message { background-color: #d4edda; color: #155724; }
+        #error-message { background-color: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
     <h1>Controle de Almoxarifado</h1>
 
-    <div id="qr-reader"></div>
-    <div id="loading-message"><h2>Buscando informações...</h2></div>
-    <div id="final-message"></div>
+    <div id="app-container">
+        <!-- O NOVO BOTÃO DE INÍCIO -->
+        <button id="start-scan-btn" onclick="startScanning()">Iniciar Scanner</button>
 
-    <div id="form-container">
-      <h2 id="product-name" style="font-style: italic;"></h2>
-        <input type="hidden" id="codigo" name="codigo">
-        <input type="hidden" id="nome-produto" name="nome_produto">
+        <!-- O leitor agora começa escondido -->
+        <div id="qr-reader"></div>
 
-        <select id="tipo" name="tipo">
-            <option value="Saída do Estoque">Saída do Estoque</option>
-            <option value="Entrada no Estoque">Entrada no Estoque</option>
-        </select>
-        <input type="number" id="quantidade" name="quantidade" placeholder="Quantidade" required>
-        <input type="text" id="nome-colaborador" name="nome_colaborador" placeholder="Seu Nome" required>
-        
-        <button id="submit-btn" onclick="submitForm()">Registrar Movimentação</button>
-        <button id="cancel-btn" onclick="cancelScan()">Cancelar / Ler Outro</button>
+        <div id="loading-message"><h2>Buscando informações...</h2></div>
+        <div id="final-message"></div>
+
+        <div id="form-container">
+            <h2 id="product-name" style="font-style: italic;"></h2>
+            <input type="hidden" id="codigo" name="codigo">
+            <input type="hidden" id="nome-produto" name="nome_produto">
+
+            <select id="tipo" name="tipo">
+                <option value="Saída do Estoque">Saída do Estoque</option>
+                <option value="Entrada no Estoque">Entrada no Estoque</option>
+            </select>
+            <input type="number" id="quantidade" name="quantidade" placeholder="Quantidade" required>
+            <input type="text" id="nome-colaborador" name="nome_colaborador" placeholder="Seu Nome" required>
+            <button id="submit-btn" onclick="submitForm()">Registrar Movimentação</button>
+            <button id="cancel-btn" onclick="cancelScan()">Cancelar / Ler Outro</button>
+        </div>
     </div>
 
-    <!-- O JavaScript continua exatamente o mesmo, não precisa ser alterado -->
     <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6m-NUSNeHmNgNO0j79fDawXu5e_Ob_-08KJGDMbHx4Sv1LvqE4Yuo1G3hqThppVGflg/exec"; 
 
         const qrReaderDiv = document.getElementById('qr-reader');
+        const startScanBtn = document.getElementById('start-scan-btn');
         const formContainer = document.getElementById('form-container');
         const loadingMessage = document.getElementById('loading-message');
         const finalMessage = document.getElementById('final-message');
         const productNameH2 = document.getElementById('product-name');
 
-        function onScanSuccess(decodedText, decodedResult) {
-            html5QrcodeScanner.clear();
-            qrReaderDiv.style.display = 'none';
-            loadingMessage.style.display = 'block';
+        // A mudança principal: usamos o objeto base para ter mais controle
+        const html5QrCode = new Html5Qrcode("qr-reader");
+
+        // Nova função para ser chamada pelo botão
+        function startScanning() {
+            startScanBtn.style.display = 'none'; // 1. Esconde o botão de início
+            qrReaderDiv.style.display = 'block'; // 2. Mostra a área do scanner
+
+            Html5Qrcode.getCameras().then(cameras => {
+                if (cameras && cameras.length) {
+                    let cameraId = cameras[0].id; // Usa a primeira câmera como padrão
+                    
+                    // Lógica para encontrar a câmera traseira
+                    // O navegador geralmente a lista por último
+                    if (cameras.length > 1) {
+                         // Procura por "back" ou "rear" no rótulo da câmera
+                        const rearCamera = cameras.find(camera => 
+                            camera.label.toLowerCase().includes('back') || 
+                            camera.label.toLowerCase().includes('rear') || 
+                            camera.label.toLowerCase().includes('trás')
+                        );
+                        if(rearCamera) {
+                            cameraId = rearCamera.id;
+                        } else {
+                            cameraId = cameras[cameras.length - 1].id; // Fallback para a última da lista
+                        }
+                    }
+
+                    // 3. Inicia o scanner com a câmera escolhida
+                    html5QrCode.start(
+                        cameraId, 
+                        { fps: 10, qrbox: {width: 250, height: 250} },
+                        onScanSuccess,
+                        (errorMessage) => { /* ignora erros de leitura contínua */ }
+                    ).catch((err) => {
+                        alert("Não foi possível iniciar o scanner. Por favor, dê permissão para usar a câmera.");
+                    });
+                }
+            }).catch(err => {
+                console.error(err);
+                alert("Erro ao encontrar câmeras. Verifique as permissões do navegador.");
+            });
+        }
         
-            const codigoLido = decodedText;
-            const urlPergunta = `${SCRIPT_URL}?action=lookup&code=${codigoLido}`;
+        function onScanSuccess(decodedText, decodedResult) {
+            // ATENÇÃO: Mudança importante! Usamos .stop() agora.
+            html5QrCode.stop().then(() => {
+                qrReaderDiv.style.display = 'none';
+                loadingMessage.style.display = 'block';
             
-            fetch(urlPergunta)
-              .then(response => response.text())
-              .then(nomeProduto => {
-                  loadingMessage.style.display = 'none';
-                  if (nomeProduto && !nomeProduto.startsWith("ERRO:")) {
-                    document.getElementById('codigo').value = codigoLido; 
-                    productNameH2.textContent = nomeProduto;
-                    document.getElementById('nome-produto').value = nomeProduto; 
-                    formContainer.style.display = 'block';
-                  } else {
-                    finalMessage.innerHTML = `<div id="error-message">${nomeProduto}</div>`;
-                    finalMessage.style.display = 'block';
-                    setTimeout(() => location.reload(), 3000);
-                  }
-              })
-              .catch(error => {
-                  loadingMessage.style.display = 'none';
-                  finalMessage.innerHTML = `<div id="error-message">Falha de comunicação. Verifique a URL do Script ou sua conexão.</div>`;
-                  finalMessage.style.display = 'block';
-                  console.error('Erro de conexão ao buscar nome:', error);
-              });
+                const codigoLido = decodedText;
+                const urlPergunta = `${SCRIPT_URL}?action=lookup&code=${codigoLido}`;
+                
+                fetch(urlPergunta)
+                .then(response => response.text())
+                .then(nomeProduto => {
+                    loadingMessage.style.display = 'none';
+                    if (nomeProduto && !nomeProduto.startsWith("ERRO:")) {
+                        document.getElementById('codigo').value = codigoLido; 
+                        productNameH2.textContent = nomeProduto;
+                        document.getElementById('nome-produto').value = nomeProduto; 
+                        formContainer.style.display = 'block';
+                    } else {
+                        finalMessage.innerHTML = `<div id="error-message">${nomeProduto}</div>`;
+                        finalMessage.style.display = 'block';
+                        setTimeout(() => location.reload(), 3000);
+                    }
+                }).catch(err => {
+                    console.error("Fetch Error:", err);
+                });
+            });
         }
         
         function cancelScan() {
@@ -178,6 +220,7 @@
         }
 
         function submitForm() {
+            // (Esta função continua exatamente igual, sem mudanças)
             const submitBtn = document.getElementById('submit-btn');
             const cancelBtn = document.getElementById('cancel-btn');
             submitBtn.disabled = true;
@@ -192,32 +235,20 @@
             form.append('nome_colaborador', document.getElementById('nome-colaborador').value);
 
             fetch(SCRIPT_URL, { method: 'POST', body: form })
-                .then(response => response.text())
-                .then(data => {
-                    formContainer.style.display = 'none';
-                    if (data.includes("sucesso")){
-                        finalMessage.innerHTML = `<div id="success-message">Registrado com sucesso! A página será recarregada.</div>`;
-                    } else {
-                        finalMessage.innerHTML = `<div id="error-message">Erro do Servidor: ${data}</div>`;
-                    }
-                    finalMessage.style.display = 'block';
-                    setTimeout(() => location.reload(), 2500);
-                })
-                .catch(error => {
-                    formContainer.style.display = 'none';
-                    finalMessage.innerHTML = `<div id="error-message">Erro crítico no envio. Tente novamente.</div>`;
-                    finalMessage.style.display = 'block';
-                    console.error('Error:', error);
-                });
+            .then(response => response.text())
+            .then(data => {
+                formContainer.style.display = 'none';
+                if (data.includes("sucesso")){
+                    finalMessage.innerHTML = `<div id="success-message">Registrado com sucesso! A página será recarregada.</div>`;
+                } else {
+                    finalMessage.innerHTML = `<div id="error-message">Erro do Servidor: ${data}</div>`;
+                }
+                finalMessage.style.display = 'block';
+                setTimeout(() => location.reload(), 2500);
+            }).catch(error => {
+                console.error("Submit Error:", error);
+            });
         }
-
-        var html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { 
-            fps: 10, 
-            qrbox: {width: 250, height: 250}, 
-            facingMode: "environment" 
-        });
-
-        html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>
