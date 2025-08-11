@@ -1,144 +1,243 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Leitor de Estoque</title>
+    <title>Controle de Estoque V4.0</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; text-align: center; }
-        #qr-reader { width: 100%; border: 2px solid #ccc; box-sizing: border-box; }
-        #form-container { display: none; margin-top: 20px; }
-        #codigo-escondido { display: none; }
-        h2 { font-style: normal; font-size: 1.5em; color: #333; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; box-sizing: border-box; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-        #cancelBtn { background-color: #6c757d; }
-        #status-message { padding: 15px; margin-top: 15px; border-radius: 5px; text-align: center; display: none; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
+        /* Estilos Gerais do Corpo da Página */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            max-width: 500px; 
+            margin: auto; 
+            padding: 20px;
+            background: linear-gradient(135deg, #0d47a1, #1e88e5, #42a5f5);
+            background-attachment: fixed;
+        }
+
+        /* Título Principal */
+        h1 {
+            color: white;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Título do Produto no Formulário */
+        #product-name {
+            font-style: italic;
+            color: #005A8D;
+        }
+        
+        /* Container Principal que agrupa tudo */
+        #app-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: 1px solid #ddd;
+        }
+        
+        /* Container do Leitor de QR Code (começa escondido) */
+        #qr-reader {
+            width: 100%; 
+            border: 2px solid #ccc; 
+            border-radius: 8px;
+            display: none; /* Começa escondido */
+        }
+
+        #form-container, #loading-message, #final-message {
+             display: none;
+             text-align: center;
+             margin-top: 20px;
+        }
+
+        /* BOTÃO DE INICIAR SCANNER */
+        #start-scan-btn {
+            width: 100%;
+            background-color: #005A8D; /* Azul Corporativo */
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        #start-scan-btn:hover {
+            background-color: #004a74;
+        }
+        
+        /* Campos de Formulário */
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 10px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            border-radius: 5px; 
+            border: 1px solid #ccc; 
+        }
+
+        /* Botões do formulário */
+        button {
+            width: 100%; 
+            padding: 14px; 
+            margin-top: 10px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        #submit-btn { background-color: #005A8D; color: white; }
+        #cancel-btn { background-color: #6c757d; color: white; }
+        button:disabled { background-color: #a0a0a0; cursor: not-allowed; }
+
+        /* Mensagens de Sucesso e Erro */
+        #success-message, #error-message { padding: 15px; margin-top: 10px; border-radius: 5px; font-weight: bold; }
+        #success-message { background-color: #d4edda; color: #155724; }
+        #error-message { background-color: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
     <h1>Controle de Almoxarifado</h1>
 
-    <!-- Onde a câmera e as mensagens aparecem -->
-    <div id="reader-container">
+    <div id="app-container">
+        <!-- O BOTÃO DE INÍCIO -->
+        <button id="start-scan-btn" onclick="startScanning()">Iniciar Scanner</button>
+
         <div id="qr-reader"></div>
-        <div id="reader-message" style="display:none; padding: 20px;"></div>
+        <div id="loading-message"><h2>Buscando informações...</h2></div>
+        <div id="final-message"></div>
+
+        <div id="form-container">
+            <h2 id="product-name" style="font-style: italic;"></h2>
+            <input type="hidden" id="codigo" name="codigo">
+            <input type="hidden" id="nome-produto" name="nome_produto">
+
+            <select id="tipo" name="tipo">
+                <option value="Saída do Estoque">Saída do Estoque</option>
+                <option value="Entrada no Estoque">Entrada no Estoque</option>
+            </select>
+            <input type="number" id="quantidade" name="quantidade" placeholder="Quantidade" required>
+            <input type="text" id="nome-colaborador" name="nome_colaborador" placeholder="Seu Nome" required>
+            <button id="submit-btn" onclick="submitForm()">Registrar Movimentação</button>
+            <button id="cancel-btn" onclick="cancelScan()">Cancelar / Ler Outro</button>
+        </div>
     </div>
 
-    <!-- O formulário que aparece depois da leitura -->
-    <div id="form-container">
-        <h2 id="product-name">Aguardando leitura...</h2>
-        <input type="text" id="codigo-escondido" name="codigo" readonly>
-        
-        <select id="tipo" name="tipo">
-            <option value="Saída do Estoque">Saída do Estoque</option>
-            <option value="Entrada no Estoque">Entrada no Estoque</option>
-        </select>
-        
-        <input type="number" id="quantidade" name="quantidade" placeholder="Quantidade" required>
-        <input type="text" id="nome" name="nome" placeholder="Seu Nome" required>
-        
-        <button onclick="submitForm()">Registrar Movimentação</button>
-        <button id="cancelBtn" onclick="cancelScan()">Cancelar / Ler Outro</button>
-    </div>
-
-    <!-- Mensagem final de sucesso ou erro -->
-    <div id="status-message"></div>
-
-    <!-- A biblioteca mágica que lê QR Code -->
     <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
-
     <script>
-        // --- URLs DAS NOSSAS PONTES ---
-        const URL_PARA_SALVAR = "https://script.google.com/macros/s/AKfycbzD3EolMrY4fvDj7aicQKpNGzAdQ6XOL_DEugKO9g7LJ9eARe7FRmKopnfeb_wQLAvdCA/exec"; 
-        const URL_PARA_BUSCAR = "https://script.google.com/macros/s/AKfycbytUs3INcBfw_pGIWqfEBbNVYtQi2eDcnfgOAj0QHG430OxmjzY0EL3q9ySxTgLNKUVqg/exec"; 
+        // ESTA É A URL DO SCRIPT QUE SABEMOS QUE FUNCIONA
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6m-NUSNeHmNgNO0j79fDawXu5e_Ob_-08KJGDMbHx4Sv1LvqE4Yuo1G3hqThppVGflg/exec"; 
 
-        // --- Elementos da página ---
         const qrReaderDiv = document.getElementById('qr-reader');
-        const readerMessageDiv = document.getElementById('reader-message');
+        const startScanBtn = document.getElementById('start-scan-btn');
         const formContainer = document.getElementById('form-container');
-        const statusMessageDiv = document.getElementById('status-message');
+        const loadingMessage = document.getElementById('loading-message');
+        const finalMessage = document.getElementById('final-message');
         const productNameH2 = document.getElementById('product-name');
-        const codigoEscondidoInput = document.getElementById('codigo-escondido');
-        
-        // --- FUNÇÕES PRINCIPAIS ---
 
-        // Função que é chamada quando o QR code é lido com sucesso
-        function onScanSuccess(decodedText, decodedResult) {
-            html5QrcodeScanner.clear(); // Para a câmera
-            qrReaderDiv.style.display = 'none';
-            readerMessageDiv.innerHTML = "<h2>Buscando informações...</h2>";
-            readerMessageDiv.style.display = 'block';
+        const html5QrCode = new Html5Qrcode("qr-reader");
 
-            var codigoLido = decodedText;
-            var urlPergunta = URL_PARA_BUSCAR + "?code=" + codigoLido;
-            
-            fetch(urlPergunta)
-              .then(response => response.text())
-              .then(nomeProduto => {
-                  readerMessageDiv.style.display = 'none';
-                  codigoEscondidoInput.value = codigoLido;
-                  productNameH2.textContent = nomeProduto;
-                  formContainer.style.display = 'block';
-              })
-              .catch(error => {
-                  console.error('Erro ao buscar nome:', error);
-                  showStatusMessage('Não foi possível encontrar o nome do produto. Tente novamente.', 'error');
-                  setTimeout(cancelScan, 3000); // Recarrega após 3 segundos
-              });
+        function startScanning() {
+            startScanBtn.style.display = 'none';
+            qrReaderDiv.style.display = 'block';
+
+            Html5Qrcode.getCameras().then(cameras => {
+                if (cameras && cameras.length) {
+                    let cameraId = cameras[0].id;
+                    if (cameras.length > 1) {
+                        const rearCamera = cameras.find(camera => 
+                            camera.label.toLowerCase().includes('back') || 
+                            camera.label.toLowerCase().includes('rear') || 
+                            camera.label.toLowerCase().includes('trás')
+                        );
+                        if(rearCamera) {
+                            cameraId = rearCamera.id;
+                        } else {
+                            cameraId = cameras[cameras.length - 1].id;
+                        }
+                    }
+                    html5QrCode.start(
+                        cameraId, 
+                        { fps: 10, qrbox: {width: 250, height: 250} },
+                        onScanSuccess,
+                        (errorMessage) => {}
+                    ).catch((err) => {
+                        alert("Não foi possível iniciar o scanner. Por favor, dê permissão para usar a câmera.");
+                    });
+                }
+            }).catch(err => {
+                console.error(err);
+                alert("Erro ao encontrar câmeras. Verifique as permissões do navegador.");
+            });
         }
-
-        // Função para cancelar e voltar a escanear
+        
+        function onScanSuccess(decodedText, decodedResult) {
+            html5QrCode.stop().then(() => {
+                qrReaderDiv.style.display = 'none';
+                loadingMessage.style.display = 'block';
+            
+                const codigoLido = decodedText;
+                const urlPergunta = `${SCRIPT_URL}?action=lookup&code=${codigoLido}`;
+                
+                fetch(urlPergunta)
+                .then(response => response.text())
+                .then(nomeProduto => {
+                    loadingMessage.style.display = 'none';
+                    if (nomeProduto && !nomeProduto.startsWith("ERRO:")) {
+                        document.getElementById('codigo').value = codigoLido; 
+                        productNameH2.textContent = nomeProduto;
+                        document.getElementById('nome-produto').value = nomeProduto; 
+                        formContainer.style.display = 'block';
+                    } else {
+                        finalMessage.innerHTML = `<div id="error-message">${nomeProduto}</div>`;
+                        finalMessage.style.display = 'block';
+                        setTimeout(() => location.reload(), 3000);
+                    }
+                }).catch(err => {
+                    console.error("Fetch Error:", err);
+                });
+            });
+        }
+        
         function cancelScan() {
             location.reload();
         }
 
-        // Função para enviar os dados para a planilha
         function submitForm() {
-            const submitButton = event.target;
-            submitButton.disabled = true;
-            submitButton.textContent = 'Enviando...';
-
+            const submitBtn = document.getElementById('submit-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+            submitBtn.disabled = true;
+            cancelBtn.disabled = true;
+            submitBtn.textContent = 'Enviando...';
+            
             const form = new FormData();
-            form.append('codigo', codigoEscondidoInput.value);
+            form.append('codigo', document.getElementById('codigo').value);
+            form.append('nome_produto', document.getElementById('nome-produto').value); 
             form.append('tipo', document.getElementById('tipo').value);
             form.append('quantidade', document.getElementById('quantidade').value);
-            form.append('nome', document.getElementById('nome').value);
-            
-            fetch(URL_PARA_SALVAR, { method: 'POST', body: form })
-                .then(response => response.text())
-                .then(data => {
-                    formContainer.style.display = 'none';
-                    showStatusMessage('Registrado com sucesso!', 'success');
-                    setTimeout(cancelScan, 2000); // Prepara para nova leitura após 2 segundos
-                })
-                .catch(error => {
-                    formContainer.style.display = 'none';
-                    showStatusMessage('Erro ao registrar. Tente novamente.', 'error');
-                    console.error('Error:', error);
-                    setTimeout(cancelScan, 3000);
-                });
-        }
-        
-        // Função para mostrar mensagens de status
-        function showStatusMessage(message, type) {
-            statusMessageDiv.textContent = message;
-            statusMessageDiv.className = type; // 'success' ou 'error'
-            statusMessageDiv.style.display = 'block';
-        }
+            form.append('nome_colaborador', document.getElementById('nome-colaborador').value);
 
-        // --- INICIALIZAÇÃO DO LEITOR ---
-        var html5QrcodeScanner = new Html5QrcodeScanner(
-            "qr-reader", 
-            { 
-                fps: 10, 
-                qrbox: 250, 
-                facingMode: "environment" 
-            }
-        );
-        html5QrcodeScanner.render(onScanSuccess);
-
+            fetch(SCRIPT_URL, { method: 'POST', body: form })
+            .then(response => response.text())
+            .then(data => {
+                formContainer.style.display = 'none';
+                if (data.includes("sucesso")){
+                    finalMessage.innerHTML = `<div id="success-message">Registrado com sucesso! A página será recarregada.</div>`;
+                } else {
+                    finalMessage.innerHTML = `<div id="error-message">Erro do Servidor: ${data}</div>`;
+                }
+                finalMessage.style.display = 'block';
+                setTimeout(() => location.reload(), 2500);
+            }).catch(error => {
+                console.error("Submit Error:", error);
+            });
+        }
     </script>
 </body>
 </html>
